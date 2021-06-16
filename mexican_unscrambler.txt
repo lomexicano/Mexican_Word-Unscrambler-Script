@@ -1,12 +1,20 @@
 $${
 
-//  World Unscrambler											;
-//  From lomexicano                                             ;
-//  Discord Tag: lomexicano#0001                                ;
-//  Discord ID: 277301646050983936                              ;
+//  World Unscrambler				;
+//  From lomexicano				;
+//  Discord Tag: lomexicano#0001		;
+//  Discord ID: 277301646050983936		;
 
-push_output_header_too = false;				// want to include a header saying how many letters the following words have? set this to true;
-only_output_with_same_size = true;			// want to also output words with less letters than the input given? set this to false;
+// want to include a header saying how many letters the following words have? set this to true;
+push_output_header_too = false;
+
+// want to output only words with the same size as the one you entered? set this to true;
+only_output_with_same_size = false;
+
+
+// Modules required:
+//	-> Klacaiba (by spthiel): 	https://spthiel.github.io/Modules/?name=Klacaiba
+//  -> or HTTP (by xaero_):		https://spthiel.github.io/Modules/?name=HTTP
 
 
 prompt(&input,"$$?","Type a word");
@@ -16,12 +24,33 @@ else;
 	stop;
 endif;
 
-&http = http("GET","https://wordunscrambler.me/unscramble/%&input%");
+unset(&http);
 
-unsafe(0);
+set(&api,"<h3>");
+
+if(MODULENEI);
+	&http = http("GET","https://wordunscrambler.me/unscramble/%&input%");
+elseif(MODULEHTTP);
+	&http = httpget("https://wordunscrambler.me/unscramble/%&input%",,);
+else;
+	log(" ");
+	log("&f&l[&2&lMA&f&lC&4&lRO&f&l] &fIt looks like you &cdon't have any module to make http-requests&f!");
+	stop;
+endif;
+
+ifmatches("%&http%","%&api%");
+else;
+	if(MODULENEI);
+		&http = http("GET","https://wordfinderx.com/words-for/%&input%");
+	elseif(MODULEHTTP);
+		&http = httpget("https://wordfinderx.com/words-for/%&input%",,);
+	endif;
+	set(&api,"<span>");
+endif;
+unsafe(500);
 	split("","%&input%",&input[]);
 	arraysize(&input[],#size);
-	split("<h3>","%&http%",&array1[]);
+	split("%&api%","%&http%",&array1[]);
 	unset(&array_output[]);
 	foreach(&array1[],&useful_lines);
 		ifmatches("%&useful_lines%","^(\d+ Letter Words.*)</div>",&log,1);
@@ -31,8 +60,8 @@ unsafe(0);
 					push(&array_output[],"%&name%");
 				endif;
 				do();
-					ifmatches("%&rest%","data\-word=\"\w+\"");
-						match("%&rest%","(.*)data\-word=\"(\w+)\"(.*)",{&before,&word,&next});
+					ifmatches("%&rest%","data\-word=(\"|')\w+(\"|')");
+						match("%&rest%","(.*)data\-word=(?:\"|')(\w+)(?:\"|')(.*)",{&before,&word,&next});
 						set(&rest,"%&before%%&next%");
 						push(&array_output[],"%&word%");
 					else;
