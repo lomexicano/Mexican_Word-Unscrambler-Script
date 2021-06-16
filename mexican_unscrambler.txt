@@ -1,0 +1,52 @@
+$${
+
+//  World Unscrambler											;
+//  From lomexicano                                             ;
+//  Discord Tag: lomexicano#0001                                ;
+//  Discord ID: 277301646050983936                              ;
+
+push_output_header_too = false;				// want to include a header saying how many letters the following words have? set this to true;
+only_output_with_same_size = true;			// want to also output words with less letters than the input given? set this to false;
+
+
+prompt(&input,"$$?","Type a word");
+ifmatches("%&input%","^\w+$");
+else;
+	log("&f&l[&2&lMA&f&lC&4&lRO&f&l] &7''&e%&input%&7'' &cis not a valid word");
+	stop;
+endif;
+
+&http = http("GET","https://wordunscrambler.me/unscramble/%&input%");
+
+unsafe(0);
+	split("","%&input%",&input[]);
+	arraysize(&input[],#size);
+	split("<h3>","%&http%",&array1[]);
+	unset(&array_output[]);
+	foreach(&array1[],&useful_lines);
+		ifmatches("%&useful_lines%","^(\d+ Letter Words.*)</div>",&log,1);
+			match("%&log%","^((\d+) Letter Words)(.*)$",{&name,#size_now,&rest});
+			if((!only_output_with_same_size)||((#size_now == #size)&&(only_output_with_same_size)));
+				if(push_output_header_too);
+					push(&array_output[],"%&name%");
+				endif;
+				do();
+					ifmatches("%&rest%","data\-word=\"\w+\"");
+						match("%&rest%","(.*)data\-word=\"(\w+)\"(.*)",{&before,&word,&next});
+						set(&rest,"%&before%%&next%");
+						push(&array_output[],"%&word%");
+					else;
+						break;
+					endif;
+				loop;
+			endif;
+		endif;
+	next;
+endunsafe;
+
+log("&f&l[&2&lMA&f&lC&4&lRO&f&l] &eOutput for &a%&input%&e:");
+foreach(&array_output[],&log);
+	log("%&log%");
+next;
+
+}$$
